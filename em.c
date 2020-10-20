@@ -34,6 +34,7 @@ char *file;
 
 int set_line();
 void show_echo(char * message);
+int start_search(int a, int b);
 
 // Errors would be pretty cool
 void error(char * msg) {
@@ -99,6 +100,7 @@ int setup_readline() {
 	 rl_bind_keyseq(DOWN_ARROW, &handle_next);
 	 rl_bind_keyseq("\\C-p", &handle_back);
 	 rl_bind_keyseq("\\C-n", &handle_next);
+	 rl_bind_keyseq("\\C-i", &start_search);
 	 
 	 rl_bind_keyseq("\\C-o", &save_file); // Save function. -- to save later.
 };
@@ -116,6 +118,16 @@ void show_echo(char * msg) { // save state first.
 	 set_line();
 };
 
+int start_search(int a, int b) {
+	 char * prompt = (char *) malloc(MAX_PROMPT_LEN * sizeof(char));
+	 sprintf(prompt, "\001%s\002search>\001%s\002 ", BCYN, RESET); // See RL_PROMPT_START/END_IGNORE.
+	 
+	 rl_set_prompt(prompt);
+	 rl_replace_line("", 0);
+	 rl_redisplay();
+	 
+	 free(prompt);
+};
 
 int set_line() {
 
