@@ -21,6 +21,11 @@
 #define MAX_PROMPT_LEN 20
 #define ASCII_CARRIAGE_RETURN 13
 
+// TODO
+// 1. Remove EDITOR_LINE_NUMBER;
+// 2. Make enter and C-j make a new line.
+
+
 typedef struct line {
 	 char * text;
 	 struct line * next;
@@ -36,7 +41,6 @@ int set_line();
 void show_echo(char * message);
 int start_search(int a, int b);
 
-// Errors would be pretty cool
 void error(char * msg) {
 	 printf("Error: %s\n", msg);
 };
@@ -65,6 +69,8 @@ int handle_next(int count, int key) { // figure out what a, b are.
 
 int handle_back(int count, int key) {
 	 save_line();
+	 
+	 
 	 if (EDITOR_LINE_NUMBER > 0) {
 		  EDITOR_LINE_NUMBER--;
 		  set_line();
@@ -129,8 +135,8 @@ int start_search(int a, int b) {
 	 free(prompt);
 };
 
+//
 int set_line() {
-
 	 if (first_line != NULL) {
 		  int i = 0;
 		  char * prompt = (char *) malloc(MAX_PROMPT_LEN * sizeof(char));
