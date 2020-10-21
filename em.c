@@ -10,7 +10,6 @@
 #include <string.h>
 
 #include "ansi.h"
-
 #define UP_ARROW "\\e[A"
 #define DOWN_ARROW "\\e[B"
 #define RIGHT_ARROW "\\e[C"
@@ -21,11 +20,6 @@
 #define MAX_PROMPT_LEN 20
 #define ASCII_CARRIAGE_RETURN 13
 
-// TODO
-// 1. Remove EDITOR_LINE_NUMBER;
-// 2. Make enter and C-j make a new line.
-
-
 typedef struct line {
 	 char * text;
 	 struct line * next;
@@ -35,11 +29,21 @@ typedef struct line {
 unsigned int EDITOR_LINE_NUMBER = 0;
 line * first_line = NULL;
 line * current_line = NULL;
-char *file; 
+char * file; 
 
 int set_line();
 void show_echo(char * message);
 int start_search(int a, int b);
+line * make_new_line();
+
+line * make_new_line() {
+	 line * l = (line *) malloc(sizeof(line));
+	 l->text = (char *) malloc(sizeof(char) * 1); // 1 character long.
+	 sprintf(l->text, "");
+	 l->prev = NULL;
+	 l->next = NULL;
+	 return l;
+};
 
 void error(char * msg) {
 	 printf("Error: %s\n", msg);
@@ -61,7 +65,19 @@ void save_line() {
 };
 
 int handle_next(int count, int key) { // figure out what a, b are.
-	 save_line();
+	 if (current_line != NULL) {
+		  save_line();
+		  if (current_line->next == NULL) {
+			   current_line->next = make_new_line();
+			   current_line->next->prev = current_line;
+		  }
+		  current_line = current_line->next;
+	 } else {
+		  current_line = make_new_line();
+		  if (first_line == NULL) {
+			   first_line = current_line;
+		  }
+	 }
 	 EDITOR_LINE_NUMBER++;
 	 set_line();
 	 return 0;
@@ -69,9 +85,8 @@ int handle_next(int count, int key) { // figure out what a, b are.
 
 int handle_back(int count, int key) {
 	 save_line();
-	 
-	 
-	 if (EDITOR_LINE_NUMBER > 0) {
+	 if (current_line->prev != NULL) {
+		  current_line = current_line->prev;
 		  EDITOR_LINE_NUMBER--;
 		  set_line();
 	 }
@@ -135,31 +150,19 @@ int start_search(int a, int b) {
 	 free(prompt);
 };
 
-//
 int set_line() {
-	 if (first_line != NULL) {
-		  int i = 0;
+	 if (current_line != NULL) {
 		  char * prompt = (char *) malloc(MAX_PROMPT_LEN * sizeof(char));
-		  
-		  current_line = first_line;
-		  
-		  while (i < EDITOR_LINE_NUMBER && current_line->next != NULL) {
-			   current_line = current_line->next;
-			   i++;
-		  }
-		  
-		  sprintf(prompt, "\001%s\002%d:\001%s\002 ", BGRN, i + 1, RESET); // See RL_PROMPT_START/END_IGNORE.
-
+		  sprintf(prompt, "\001%s\002%d:\001%s\002 ", BGRN, EDITOR_LINE_NUMBER, RESET); // See RL_PROMPT_START/END_IGNORE.
 		  rl_replace_line(current_line->text, 0);
 		  rl_set_prompt(prompt);
 		  rl_redisplay();
-
 		  free(prompt);
-	 } 
+	 } else {
+		  handle_next(0, 0); // Make a newline and try again.
+	 }
 	 return 0;	 
 };
-
-
 
 int main(int argc, char ** const argv) {
 	
@@ -202,8 +205,9 @@ int main(int argc, char ** const argv) {
 	 }
 
 	 rl_initialize();
+	 
 	 line * prev_line = NULL;
-
+	 
 	 while ((getline(&line_text, &line_len, fp) != -1)) {
 		  line * curr_line = (line *) malloc(sizeof(line));		  
 		  curr_line->text = (char *) malloc(sizeof(char) * MAX_LINE_LEN);
@@ -215,12 +219,14 @@ int main(int argc, char ** const argv) {
 			   prev_line->next = curr_line;
 		  } else {
 			   first_line = curr_line;
+			   current_line = curr_line;
+			   EDITOR_LINE_NUMBER = 1;
 		  }
 		  curr_line->prev = prev_line;
 		  curr_line->next = NULL;
 		  prev_line = curr_line;
-	 }
-
+	 }	 
+	 
 	 fclose(fp);
 	 rl_startup_hook = &setup_readline;
 	 rl_pre_input_hook = &set_line;
