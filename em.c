@@ -1,13 +1,13 @@
-#include <limits.h> // Path Max
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <limits.h>
 #include <readline/history.h>
 #include <readline/readline.h>
-#include <stdint.h>
-#include <stdio.h>  // io
-#include <stdlib.h> // free
-#include <string.h>
-#include <sys/stat.h> //stat
-#include <sys/types.h>
-#include <unistd.h> // getcwd
 
 #include "ansi.h"
 #define UP_ARROW "\\e[A"
@@ -15,7 +15,7 @@
 #define RIGHT_ARROW "\\e[C"
 #define LEFT_ARROW "\\e[D"
 
-#define MAX_LINE_LEN 4096 // characters
+#define MAX_LINE_LEN 4096
 #define MAX_MESSAGE_LEN 200
 #define MAX_PROMPT_LEN 20
 #define ASCII_CARRIAGE_RETURN 13
@@ -38,7 +38,7 @@ line *make_new_line();
 
 line *make_new_line() {
   line *l = (line *)malloc(sizeof(line));
-  l->text = (char *)malloc(sizeof(char) * 1); // 1 character long.
+  l->text = (char *)malloc(sizeof(char) * 1);
   sprintf(l->text, "");
   l->prev = NULL;
   l->next = NULL;
@@ -62,7 +62,7 @@ void save_line() {
   }
 };
 
-int handle_next(int count, int key) { // figure out what a, b are.
+int handle_next(int count, int key) {
   if (current_line != NULL) {
     save_line();
     if (current_line->next == NULL) {
@@ -121,13 +121,13 @@ int setup_readline() {
   rl_bind_keyseq("\\C-n", &handle_next);
   rl_bind_keyseq("\\C-i", &start_search);
 
-  rl_bind_keyseq("\\C-o", &save_file); // Save function. -- to save later.
+  rl_bind_keyseq("\\C-o", &save_file);
 };
 
-void show_echo(char *msg) { // save state first.
+void show_echo(char *msg) {
   char *prompt = (char *)malloc(MAX_PROMPT_LEN * sizeof(char));
   sprintf(prompt, "\001%s\002echo>\001%s\002 ", BCYN,
-          RESET); // See RL_PROMPT_START/END_IGNORE.
+          RESET);
 
   rl_set_prompt(prompt);
   rl_replace_line(msg, 0);
@@ -141,7 +141,7 @@ void show_echo(char *msg) { // save state first.
 int start_search(int a, int b) {
   char *prompt = (char *)malloc(MAX_PROMPT_LEN * sizeof(char));
   sprintf(prompt, "\001%s\002search>\001%s\002 ", BCYN,
-          RESET); // See RL_PROMPT_START/END_IGNORE.
+          RESET);
 
   rl_set_prompt(prompt);
   rl_replace_line("", 0);
@@ -154,13 +154,13 @@ int set_line() {
   if (current_line != NULL) {
     char *prompt = (char *)malloc(MAX_PROMPT_LEN * sizeof(char));
     sprintf(prompt, "\001%s\002%d:\001%s\002 ", BGRN, EDITOR_LINE_NUMBER,
-            RESET); // See RL_PROMPT_START/END_IGNORE.
+            RESET);
     rl_replace_line(current_line->text, 0);
     rl_set_prompt(prompt);
     rl_redisplay();
     free(prompt);
   } else {
-    handle_next(0, 0); // Make a newline and try again.
+    handle_next(0, 0);
   }
   return 0;
 };
@@ -169,7 +169,7 @@ int main(int argc, char **const argv) {
 
   char cwd[PATH_MAX];
   char *rl;
-  FILE *fp; // file pointer
+  FILE *fp;
   size_t line_len = 0;
   unsigned int line_num = 0;
   unsigned int target_line_num = 0;
@@ -189,7 +189,7 @@ int main(int argc, char **const argv) {
     file = argv[1];
   } else {
     int len = strlen(cwd);
-    strcat(cwd, "/"); // path compoent
+    strcat(cwd, "/");
     strcat(cwd, argv[1]);
     file = cwd;
     if (!valid_file(file)) {
